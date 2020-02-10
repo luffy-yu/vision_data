@@ -12,7 +12,7 @@ def download_file(url):
         try:
             data = urllib2.urlopen(url).read()
             break
-        except Exception, e:
+        except Exception as e:
             if attempt == (num_attempts - 1):  # If last attempt
                 raise e
     return data

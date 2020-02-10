@@ -2,8 +2,6 @@
 import time
 import random
 import xml.parsers.expat
-import urllib2
-import httplib
 import vision_data
 import os
 import xml.etree.ElementTree
@@ -64,12 +62,11 @@ class Flickr(vision_data.VisionDataset):
                                              per_page=self.per_page,
                                              **kw)
             self.sleep_penalty = self.sleep_penalty_orig
-        except (httplib.BadStatusLine,
+        except (
                 flickrapi.exceptions.FlickrError,
                 xml.parsers.expat.ExpatError,
-                xml.etree.ElementTree.ParseError,
-                urllib2.URLError,
-                urllib2.HTTPError), e:
+                xml.etree.ElementTree.ParseError
+                ) as e:
             sys.stderr.write('Except[%s]\n' % str(e))
             time.sleep(self.sleep_penalty)
             self.sleep_penalty = min(self.sleep_penalty_max, self.sleep_penalty * 2)

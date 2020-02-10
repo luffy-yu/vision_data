@@ -1,8 +1,8 @@
 import hashlib
 import os
 import urllib
+from urllib.request import urlretrieve
 import logging
-import urllib
 import subprocess
 import shutil
 import numpy as np
@@ -16,7 +16,7 @@ class DontRemoveException(Exception):
 class VisionDataset(object):
     """
     """
-    
+
     def __init__(self, name, data_urls=None, homepage=None, bibtexs=None,
                  overview=None, no_root=False):
         """
@@ -66,10 +66,21 @@ class VisionDataset(object):
             print('Removing [%s]' % self.dataset_path)
             try:
                 shutil.rmtree(self.dataset_path)
-            except OSError, e:
+            except OSError as e:
                 print(e)
         if os.path.exists(self.dataset_path):
-            return True
+            # check whether to extract
+            flag = True
+            for _, file_name in self._data_urls.keys():
+                if not os.path.exists(os.path.join(self.dataset_path, file_name)):
+                    flag = False
+                    break
+
+            if flag:
+                for (md5hash, file_name), urls in self._data_urls.items():
+                    self._unpack_remove_file(file_name)
+                return True
+
         os.makedirs(self.dataset_path)
         if self._data_urls is None:
             return
@@ -77,9 +88,9 @@ class VisionDataset(object):
             print('Downloading [%s]' % file_name)
             for url in urls:
                 # TODO: Make this more robust and check hash
-                a = urllib.urlretrieve(url, self.dataset_path + file_name)
+                a = urlretrieve(url, self.dataset_path + file_name)
                 print(a)
-                #assert(md5hash == hashlib.md5(data).hexdigest())
+                # assert(md5hash == hashlib.md5(data).hexdigest())
                 break
         for (md5hash, file_name), urls in self._data_urls.items():
             self._unpack_remove_file(file_name)
@@ -91,9 +102,10 @@ class VisionDataset(object):
         except DontRemoveException:
             pass
         else:
-            print('Removing Temporary File [%s]' % file_name)
-            os.remove(self.dataset_path + file_name)
-    
+            pass
+            # print('Removing Temporary File [%s]' % file_name)
+            # os.remove(self.dataset_path + file_name)
+
     def object_rec_parse(self, *args, **kw):
         import cv2
         try:
@@ -163,8 +175,9 @@ class VisionDataset(object):
                 min_coords = np.max([[0, 0],
                                      np.min(obj['xy'], 0)], 0)
                 if (min_coords > np.array(image.shape[:2][::-1])).any():
-                    print('Warning: Annotation entirely outside of image, skipping! file[%s] class[%s] xy[%s]' % (obj['class'],
-                                                                                                                  obj['xy']))
+                    print('Warning: Annotation entirely outside of image, skipping! file[%s] class[%s] xy[%s]' % (
+                    obj['class'],
+                    obj['xy']))
                     continue
                 max_coords = np.min([np.array(image.shape[:2][::-1]) - 1,
                                      np.max(obj['xy'], 0) + 1], 0)

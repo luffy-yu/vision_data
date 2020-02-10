@@ -47,7 +47,7 @@ class ImageNet(vision_data.VisionDataset):
             Data is in the form of [image_path] = objects, where
             objects is a list of {'class': class_name, 'xy': np_array}
         """
-        print glob.glob(self.dataset_path + 'Annotation/%s/*.xml' % wnid)
+        print(glob.glob(self.dataset_path + 'Annotation/%s/*.xml' % wnid))
         return 
         if not os.path.exists(pkl_fn):
             print('Performing initial parse, this takes a minute.')

@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import glob
-import cPickle as pickle
+import pickle
 import vision_data
 from PIL import Image
 import re

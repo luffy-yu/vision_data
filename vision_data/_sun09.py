@@ -1,8 +1,12 @@
-import xml.etree.cElementTree as ElementTree
-import numpy as np
 import glob
 import os
-import cPickle as pickle
+import pickle
+import xml.etree.cElementTree as ElementTree
+
+import numpy as np
+import scipy as sp
+import scipy.io
+
 import vision_data
 
 
@@ -23,8 +27,6 @@ class SUN09(vision_data.VisionDataset):
                                     homepage='http://people.csail.mit.edu/myungjin/HContext.html',
                                     bibtexs=None,
                  overview=None)
-        import scipy as sp
-        import scipy.io
 
     def _parse_xml(self, xml_filename):
         # Replace a malformed character with a valid one (only one in the database)
@@ -55,7 +57,7 @@ class SUN09(vision_data.VisionDataset):
             for filename_path in glob.glob(folder_path + '/*'):
                 try:
                     filename, folder, objs = vision_data.parse_voc_xml(filename_path)
-                except Exception, e:
+                except Exception as e:
                     print(e)
                     print('Parse Error: %s' % filename_path)
                     continue
@@ -66,7 +68,7 @@ class SUN09(vision_data.VisionDataset):
             image_path = self.dataset_path + 'Images/static_sun_objects/'
             try:
                 filename, folder, objs = self._parse_xml(filename_path)
-            except Exception, e:
+            except Exception as e:
                 print(e)
                 print('Parse Error: %s' % filename_path)
                 continue
@@ -84,9 +86,10 @@ class SUN09(vision_data.VisionDataset):
             image_objects[img_path] = []
             for obj in cur_image_data.object[0]:
                 class_name = ''.join(obj.name[0])
-                if class_name not in categories:
-                    print('Skipping [%s]' % class_name)
-                    continue
+                # why?
+                # if class_name not in categories:
+                #     print('Skipping [%s]' % class_name)
+                #     continue
                 x = obj.polygon[0][0].x
                 y = obj.polygon[0][0].y
                 xy = np.hstack([x, y])
@@ -118,10 +121,10 @@ class SUN09(vision_data.VisionDataset):
         if not os.path.exists(pkl_fn):
             print('Performing initial parse, this takes a minute.')
             train_data, test_data = self._parse_mat()
-            with open(pkl_fn, 'w') as sun09_fp:
+            with open(pkl_fn, 'wb') as sun09_fp:
                 pickle.dump((train_data, test_data), sun09_fp, -1)
         else:
-            with open(pkl_fn) as sun09_fp:
+            with open(pkl_fn, 'rb') as sun09_fp:
                 train_data, test_data = pickle.load(sun09_fp)
         mk_abs = lambda z: ((self.dataset_path + x, y) for x, y in z.items())
         if split == 'train':
@@ -140,5 +143,5 @@ class SUN09(vision_data.VisionDataset):
             Dataset as specified by 'split'
             Data is in the form of [image_path] = image_classes
         """
-        data = self.object_rec_parse(split)
-        return dict([(x, set([z['class'] for z in y])) for x, y in data.items()])
+        data = list(self.object_rec_parse(split))
+        return dict([(x, set([z['class'] for z in y])) for x, y in data])
